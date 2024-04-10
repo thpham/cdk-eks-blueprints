@@ -11,6 +11,7 @@ import { cloneDeep } from '../utils';
 import { IKey } from "aws-cdk-lib/aws-kms";
 import {CreateKmsKeyProvider} from "../resource-providers/kms-key";
 import { ArgoGitOpsFactory } from "../addons/argocd/argo-gitops-factory";
+import { EksBlueprintProduct, EksBlueprintProductStackProps } from '../svc-catalog';
 
 /* Default K8s version of EKS Blueprints */
 export const DEFAULT_VERSION = KubernetesVersion.V1_29;
@@ -208,13 +209,26 @@ export class BlueprintBuilder implements spi.AsyncStackBuilder {
     public async buildAsync(scope: Construct, id: string, stackProps?: cdk.StackProps): Promise<EksBlueprint> {
         return this.build(scope, id, stackProps).waitForAsyncTasks();
     }
+
+    public buildProduct(scope: Construct, id: string, props?: EksBlueprintProductStackProps): EksBlueprintProduct {
+        return new EksBlueprintProduct(scope, { ...this.props, ...{ id } },
+            { ...{ env: this.env }, ...props });
+    }
+
+    public async buildAsyncProduct(scope: Construct, id: string, stackProps?: EksBlueprintProductStackProps): Promise<EksBlueprintProduct> {
+        return this.buildProduct(scope, id, stackProps).waitForAsyncTasks();
+    }
+}
+
+export class EksBlueprintGeneric {
+
 }
 
 /**
  * Entry point to the platform provisioning. Creates a CFN stack based on the provided configuration
  * and orchestrates provisioning of add-ons, teams and post deployment hooks.
  */
-export class EksBlueprint extends cdk.Stack {
+export class EksBlueprint extends cdk.Stack implements EksBlueprintGeneric {
 
     static readonly USAGE_ID = "qs-1s1r465hk";
 
