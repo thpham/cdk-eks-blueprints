@@ -1,0 +1,66 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.EksBlueprint = exports.BlueprintBuilder = void 0;
+const cdk = require("aws-cdk-lib");
+const utils = require("../utils");
+const eks_blueprint_construct_1 = require("./eks-blueprint-construct");
+/**
+ * Blueprint builder implements a builder pattern that improves readability (no bloated constructors)
+ * and allows creating a blueprint in an abstract state that can be applied to various instantiations
+ * in accounts and regions.
+ */
+class BlueprintBuilder extends eks_blueprint_construct_1.BlueprintConstructBuilder {
+    constructor() {
+        super();
+    }
+    clone(region, account) {
+        return new BlueprintBuilder().withBlueprintProps(this.props)
+            .account(account !== null && account !== void 0 ? account : this.env.account).region(region !== null && region !== void 0 ? region : this.env.region);
+    }
+    build(scope, id, stackProps) {
+        return new EksBlueprint(scope, { ...this.props, ...{ id } }, { ...{ env: this.env }, ...stackProps });
+    }
+    async buildAsync(scope, id, stackProps) {
+        return this.build(scope, id, stackProps).waitForAsyncTasks();
+    }
+}
+exports.BlueprintBuilder = BlueprintBuilder;
+/**
+ * Entry point to the platform provisioning. Creates a CFN stack based on the provided configuration
+ * and orchestrates provisioning of add-ons, teams and post deployment hooks.
+ */
+class EksBlueprint extends cdk.Stack {
+    static builder() {
+        return new BlueprintBuilder();
+    }
+    constructor(scope, blueprintProps, props) {
+        super(scope, blueprintProps.id, utils.withUsageTracking(EksBlueprint.USAGE_ID, props));
+        const eksBlueprintConstruct = new eks_blueprint_construct_1.EksBlueprintConstruct(this, blueprintProps);
+        this.clusterInfo = eksBlueprintConstruct.getClusterInfo();
+        this.asyncTasks = eksBlueprintConstruct.getAsyncTasks();
+    }
+    /**
+     * Since constructor cannot be marked as async, adding a separate method to wait
+     * for async code to finish.
+     * @returns Promise that resolves to the blueprint
+     */
+    async waitForAsyncTasks() {
+        if (this.asyncTasks) {
+            return this.asyncTasks.then(() => {
+                return this;
+            });
+        }
+        return Promise.resolve(this);
+    }
+    /**
+     * This method returns all the constructs produced by during the cluster creation (e.g. add-ons).
+     * May be used in testing for verification.
+     * @returns cluster info object
+     */
+    getClusterInfo() {
+        return this.clusterInfo;
+    }
+}
+exports.EksBlueprint = EksBlueprint;
+EksBlueprint.USAGE_ID = "qs-1s1r465hk";
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiZWtzLWJsdWVwcmludC1zdGFjay5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uLy4uL2xpYi9zdGFja3MvZWtzLWJsdWVwcmludC1zdGFjay50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7QUFBQSxtQ0FBbUM7QUFHbkMsa0NBQWtDO0FBQ2xDLHVFQUE4RztBQUU5Rzs7OztHQUlHO0FBQ0gsTUFBYSxnQkFBaUIsU0FBUSxtREFBeUI7SUFDM0Q7UUFDSSxLQUFLLEVBQUUsQ0FBQztJQUNaLENBQUM7SUFFTSxLQUFLLENBQUMsTUFBZSxFQUFFLE9BQWdCO1FBQzFDLE9BQU8sSUFBSSxnQkFBZ0IsRUFBRSxDQUFDLGtCQUFrQixDQUFDLElBQUksQ0FBQyxLQUFLLENBQUM7YUFDdkQsT0FBTyxDQUFDLE9BQU8sYUFBUCxPQUFPLGNBQVAsT0FBTyxHQUFJLElBQUksQ0FBQyxHQUFHLENBQUMsT0FBTyxDQUFDLENBQUMsTUFBTSxDQUFDLE1BQU0sYUFBTixNQUFNLGNBQU4sTUFBTSxHQUFJLElBQUksQ0FBQyxHQUFHLENBQUMsTUFBTSxDQUFDLENBQUM7SUFDaEYsQ0FBQztJQUNNLEtBQUssQ0FBQyxLQUFnQixFQUFFLEVBQVUsRUFBRSxVQUEyQjtRQUNsRSxPQUFPLElBQUksWUFBWSxDQUFDLEtBQUssRUFBRSxFQUFFLEdBQUcsSUFBSSxDQUFDLEtBQUssRUFBRSxHQUFHLEVBQUUsRUFBRSxFQUFFLEVBQUUsRUFDdkQsRUFBRSxHQUFHLEVBQUUsR0FBRyxFQUFFLElBQUksQ0FBQyxHQUFHLEVBQUUsRUFBRSxHQUFHLFVBQVUsRUFBRSxDQUFDLENBQUM7SUFDakQsQ0FBQztJQUVNLEtBQUssQ0FBQyxVQUFVLENBQUMsS0FBZ0IsRUFBRSxFQUFVLEVBQUUsVUFBMkI7UUFDN0UsT0FBTyxJQUFJLENBQUMsS0FBSyxDQUFDLEtBQUssRUFBRSxFQUFFLEVBQUUsVUFBVSxDQUFDLENBQUMsaUJBQWlCLEVBQUUsQ0FBQztJQUNqRSxDQUFDO0NBQ0o7QUFqQkQsNENBaUJDO0FBRUQ7OztHQUdHO0FBQ0gsTUFBYSxZQUFhLFNBQVEsR0FBRyxDQUFDLEtBQUs7SUFRaEMsTUFBTSxDQUFDLE9BQU87UUFDakIsT0FBTyxJQUFJLGdCQUFnQixFQUFFLENBQUM7SUFDbEMsQ0FBQztJQUVELFlBQVksS0FBZ0IsRUFBRSxjQUFpQyxFQUFFLEtBQXNCO1FBQ25GLEtBQUssQ0FBQyxLQUFLLEVBQUUsY0FBYyxDQUFDLEVBQUUsRUFBRSxLQUFLLENBQUMsaUJBQWlCLENBQUMsWUFBWSxDQUFDLFFBQVEsRUFBRSxLQUFLLENBQUMsQ0FBQyxDQUFDO1FBQ3ZGLE1BQU0scUJBQXFCLEdBQUcsSUFBSSwrQ0FBcUIsQ0FBQyxJQUFJLEVBQUUsY0FBYyxDQUFDLENBQUM7UUFDOUUsSUFBSSxDQUFDLFdBQVcsR0FBRyxxQkFBcUIsQ0FBQyxjQUFjLEVBQUUsQ0FBQztRQUMxRCxJQUFJLENBQUMsVUFBVSxHQUFHLHFCQUFxQixDQUFDLGFBQWEsRUFBRSxDQUFDO0lBQzVELENBQUM7SUFFRDs7OztPQUlHO0lBQ0ksS0FBSyxDQUFDLGlCQUFpQjtRQUMxQixJQUFJLElBQUksQ0FBQyxVQUFVLEVBQUUsQ0FBQztZQUNsQixPQUFPLElBQUksQ0FBQyxVQUFVLENBQUMsSUFBSSxDQUFDLEdBQUcsRUFBRTtnQkFDN0IsT0FBTyxJQUFJLENBQUM7WUFDaEIsQ0FBQyxDQUFDLENBQUM7UUFDUCxDQUFDO1FBQ0QsT0FBTyxPQUFPLENBQUMsT0FBTyxDQUFDLElBQUksQ0FBQyxDQUFDO0lBQ2pDLENBQUM7SUFFRDs7OztPQUlHO0lBQ0gsY0FBYztRQUNWLE9BQU8sSUFBSSxDQUFDLFdBQVcsQ0FBQztJQUM1QixDQUFDOztBQXhDTCxvQ0F5Q0M7QUF2Q21CLHFCQUFRLEdBQUcsY0FBYyxDQUFDIiwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0ICogYXMgY2RrIGZyb20gJ2F3cy1jZGstbGliJztcbmltcG9ydCB7IENvbnN0cnVjdCB9IGZyb20gJ2NvbnN0cnVjdHMnO1xuaW1wb3J0ICogYXMgc3BpIGZyb20gJy4uL3NwaSc7XG5pbXBvcnQgKiBhcyB1dGlscyBmcm9tICcuLi91dGlscyc7XG5pbXBvcnQge0JsdWVwcmludENvbnN0cnVjdEJ1aWxkZXIsIEVrc0JsdWVwcmludENvbnN0cnVjdCwgRWtzQmx1ZXByaW50UHJvcHN9IGZyb20gXCIuL2Vrcy1ibHVlcHJpbnQtY29uc3RydWN0XCI7XG5cbi8qKlxuICogQmx1ZXByaW50IGJ1aWxkZXIgaW1wbGVtZW50cyBhIGJ1aWxkZXIgcGF0dGVybiB0aGF0IGltcHJvdmVzIHJlYWRhYmlsaXR5IChubyBibG9hdGVkIGNvbnN0cnVjdG9ycylcbiAqIGFuZCBhbGxvd3MgY3JlYXRpbmcgYSBibHVlcHJpbnQgaW4gYW4gYWJzdHJhY3Qgc3RhdGUgdGhhdCBjYW4gYmUgYXBwbGllZCB0byB2YXJpb3VzIGluc3RhbnRpYXRpb25zXG4gKiBpbiBhY2NvdW50cyBhbmQgcmVnaW9ucy5cbiAqL1xuZXhwb3J0IGNsYXNzIEJsdWVwcmludEJ1aWxkZXIgZXh0ZW5kcyBCbHVlcHJpbnRDb25zdHJ1Y3RCdWlsZGVyIGltcGxlbWVudHMgc3BpLkFzeW5jU3RhY2tCdWlsZGVyIHtcbiAgICBjb25zdHJ1Y3RvcigpIHtcbiAgICAgICAgc3VwZXIoKTtcbiAgICB9XG5cbiAgICBwdWJsaWMgY2xvbmUocmVnaW9uPzogc3RyaW5nLCBhY2NvdW50Pzogc3RyaW5nKTogQmx1ZXByaW50QnVpbGRlciB7XG4gICAgICAgIHJldHVybiBuZXcgQmx1ZXByaW50QnVpbGRlcigpLndpdGhCbHVlcHJpbnRQcm9wcyh0aGlzLnByb3BzKVxuICAgICAgICAgICAgLmFjY291bnQoYWNjb3VudCA/PyB0aGlzLmVudi5hY2NvdW50KS5yZWdpb24ocmVnaW9uID8/IHRoaXMuZW52LnJlZ2lvbik7XG4gICAgfVxuICAgIHB1YmxpYyBidWlsZChzY29wZTogQ29uc3RydWN0LCBpZDogc3RyaW5nLCBzdGFja1Byb3BzPzogY2RrLlN0YWNrUHJvcHMpOiBFa3NCbHVlcHJpbnQge1xuICAgICAgICByZXR1cm4gbmV3IEVrc0JsdWVwcmludChzY29wZSwgeyAuLi50aGlzLnByb3BzLCAuLi57IGlkIH0gfSxcbiAgICAgICAgICAgIHsgLi4ueyBlbnY6IHRoaXMuZW52IH0sIC4uLnN0YWNrUHJvcHMgfSk7XG4gICAgfVxuXG4gICAgcHVibGljIGFzeW5jIGJ1aWxkQXN5bmMoc2NvcGU6IENvbnN0cnVjdCwgaWQ6IHN0cmluZywgc3RhY2tQcm9wcz86IGNkay5TdGFja1Byb3BzKTogUHJvbWlzZTxFa3NCbHVlcHJpbnQ+IHtcbiAgICAgICAgcmV0dXJuIHRoaXMuYnVpbGQoc2NvcGUsIGlkLCBzdGFja1Byb3BzKS53YWl0Rm9yQXN5bmNUYXNrcygpO1xuICAgIH1cbn1cblxuLyoqXG4gKiBFbnRyeSBwb2ludCB0byB0aGUgcGxhdGZvcm0gcHJvdmlzaW9uaW5nLiBDcmVhdGVzIGEgQ0ZOIHN0YWNrIGJhc2VkIG9uIHRoZSBwcm92aWRlZCBjb25maWd1cmF0aW9uXG4gKiBhbmQgb3JjaGVzdHJhdGVzIHByb3Zpc2lvbmluZyBvZiBhZGQtb25zLCB0ZWFtcyBhbmQgcG9zdCBkZXBsb3ltZW50IGhvb2tzLlxuICovXG5leHBvcnQgY2xhc3MgRWtzQmx1ZXByaW50IGV4dGVuZHMgY2RrLlN0YWNrIHtcblxuICAgIHN0YXRpYyByZWFkb25seSBVU0FHRV9JRCA9IFwicXMtMXMxcjQ2NWhrXCI7XG5cbiAgICBwcml2YXRlIGFzeW5jVGFza3M6IFByb21pc2U8dm9pZCB8IENvbnN0cnVjdFtdPjtcblxuICAgIHByaXZhdGUgY2x1c3RlckluZm86IHNwaS5DbHVzdGVySW5mbztcblxuICAgIHB1YmxpYyBzdGF0aWMgYnVpbGRlcigpOiBCbHVlcHJpbnRCdWlsZGVyIHtcbiAgICAgICAgcmV0dXJuIG5ldyBCbHVlcHJpbnRCdWlsZGVyKCk7XG4gICAgfVxuXG4gICAgY29uc3RydWN0b3Ioc2NvcGU6IENvbnN0cnVjdCwgYmx1ZXByaW50UHJvcHM6IEVrc0JsdWVwcmludFByb3BzLCBwcm9wcz86IGNkay5TdGFja1Byb3BzKSB7XG4gICAgICAgIHN1cGVyKHNjb3BlLCBibHVlcHJpbnRQcm9wcy5pZCwgdXRpbHMud2l0aFVzYWdlVHJhY2tpbmcoRWtzQmx1ZXByaW50LlVTQUdFX0lELCBwcm9wcykpO1xuICAgICAgICBjb25zdCBla3NCbHVlcHJpbnRDb25zdHJ1Y3QgPSBuZXcgRWtzQmx1ZXByaW50Q29uc3RydWN0KHRoaXMsIGJsdWVwcmludFByb3BzKTtcbiAgICAgICAgdGhpcy5jbHVzdGVySW5mbyA9IGVrc0JsdWVwcmludENvbnN0cnVjdC5nZXRDbHVzdGVySW5mbygpO1xuICAgICAgICB0aGlzLmFzeW5jVGFza3MgPSBla3NCbHVlcHJpbnRDb25zdHJ1Y3QuZ2V0QXN5bmNUYXNrcygpO1xuICAgIH1cblxuICAgIC8qKlxuICAgICAqIFNpbmNlIGNvbnN0cnVjdG9yIGNhbm5vdCBiZSBtYXJrZWQgYXMgYXN5bmMsIGFkZGluZyBhIHNlcGFyYXRlIG1ldGhvZCB0byB3YWl0XG4gICAgICogZm9yIGFzeW5jIGNvZGUgdG8gZmluaXNoLlxuICAgICAqIEByZXR1cm5zIFByb21pc2UgdGhhdCByZXNvbHZlcyB0byB0aGUgYmx1ZXByaW50XG4gICAgICovXG4gICAgcHVibGljIGFzeW5jIHdhaXRGb3JBc3luY1Rhc2tzKCk6IFByb21pc2U8RWtzQmx1ZXByaW50PiB7XG4gICAgICAgIGlmICh0aGlzLmFzeW5jVGFza3MpIHtcbiAgICAgICAgICAgIHJldHVybiB0aGlzLmFzeW5jVGFza3MudGhlbigoKSA9PiB7XG4gICAgICAgICAgICAgICAgcmV0dXJuIHRoaXM7XG4gICAgICAgICAgICB9KTtcbiAgICAgICAgfVxuICAgICAgICByZXR1cm4gUHJvbWlzZS5yZXNvbHZlKHRoaXMpO1xuICAgIH1cblxuICAgIC8qKlxuICAgICAqIFRoaXMgbWV0aG9kIHJldHVybnMgYWxsIHRoZSBjb25zdHJ1Y3RzIHByb2R1Y2VkIGJ5IGR1cmluZyB0aGUgY2x1c3RlciBjcmVhdGlvbiAoZS5nLiBhZGQtb25zKS5cbiAgICAgKiBNYXkgYmUgdXNlZCBpbiB0ZXN0aW5nIGZvciB2ZXJpZmljYXRpb24uXG4gICAgICogQHJldHVybnMgY2x1c3RlciBpbmZvIG9iamVjdFxuICAgICAqL1xuICAgIGdldENsdXN0ZXJJbmZvKCk6IHNwaS5DbHVzdGVySW5mbyB7XG4gICAgICAgIHJldHVybiB0aGlzLmNsdXN0ZXJJbmZvO1xuICAgIH1cbn1cblxuIl19

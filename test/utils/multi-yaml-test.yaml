@@ -1,6 +1,0 @@
----
-kind: ClusterRole
----
-kind: Deployment
----
-kind: Pod

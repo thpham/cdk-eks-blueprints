@@ -1,0 +1,29 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.cloneDeep = exports.setPath = void 0;
+const aws_eks_1 = require("aws-cdk-lib/aws-eks");
+const lodash_1 = require("lodash");
+const nutil = require("node:util/types");
+const setPath = (obj, path, val) => {
+    const keys = path.split('.');
+    const lastKey = keys.pop();
+    const lastObj = keys.reduce((obj, key) => obj[key] = obj[key] || {}, obj);
+    lastObj[lastKey] = val;
+};
+exports.setPath = setPath;
+/**
+ * Creates a deep clone of an object, retaining types.
+ * @param source
+ * @param resolveFn if passed, this function can perform transformation (e.g. resolve proxies)
+ * @returns
+ */
+function cloneDeep(source, resolveFn) {
+    return (0, lodash_1.cloneDeepWith)(source, (value) => {
+        if (value && (value instanceof aws_eks_1.KubernetesVersion || nutil.isProxy(value))) {
+            return resolveFn ? resolveFn(value) : value;
+        }
+        return undefined;
+    });
+}
+exports.cloneDeep = cloneDeep;
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoib2JqZWN0LXV0aWxzLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vbGliL3V0aWxzL29iamVjdC11dGlscy50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7QUFBQSxpREFBd0Q7QUFDeEQsbUNBQXVDO0FBQ3ZDLHlDQUF5QztBQUVsQyxNQUFNLE9BQU8sR0FBRyxDQUFDLEdBQVMsRUFBRSxJQUFZLEVBQUUsR0FBUSxFQUFFLEVBQUU7SUFDekQsTUFBTSxJQUFJLEdBQUcsSUFBSSxDQUFDLEtBQUssQ0FBQyxHQUFHLENBQUMsQ0FBQztJQUM3QixNQUFNLE9BQU8sR0FBRyxJQUFJLENBQUMsR0FBRyxFQUFHLENBQUM7SUFDNUIsTUFBTSxPQUFPLEdBQUcsSUFBSSxDQUFDLE1BQU0sQ0FBQyxDQUFDLEdBQUcsRUFBRSxHQUFHLEVBQUUsRUFBRSxDQUNyQyxHQUFHLENBQUMsR0FBRyxDQUFDLEdBQUcsR0FBRyxDQUFDLEdBQUcsQ0FBQyxJQUFJLEVBQUUsRUFDekIsR0FBRyxDQUFDLENBQUM7SUFDVCxPQUFPLENBQUMsT0FBTyxDQUFDLEdBQUcsR0FBRyxDQUFDO0FBQzNCLENBQUMsQ0FBQztBQVBXLFFBQUEsT0FBTyxXQU9sQjtBQUVGOzs7OztHQUtHO0FBQ0gsU0FBZ0IsU0FBUyxDQUFJLE1BQVMsRUFBRSxTQUE2QjtJQUNqRSxPQUFPLElBQUEsc0JBQWEsRUFBQyxNQUFNLEVBQUUsQ0FBQyxLQUFLLEVBQUUsRUFBRTtRQUNuQyxJQUFHLEtBQUssSUFBSSxDQUFDLEtBQUssWUFBWSwyQkFBaUIsSUFBSSxLQUFLLENBQUMsT0FBTyxDQUFDLEtBQUssQ0FBQyxDQUFDLEVBQUUsQ0FBQztZQUN2RSxPQUFPLFNBQVMsQ0FBQyxDQUFDLENBQUMsU0FBUyxDQUFDLEtBQUssQ0FBQyxDQUFDLENBQUMsQ0FBQyxLQUFLLENBQUM7UUFDaEQsQ0FBQztRQUNELE9BQU8sU0FBUyxDQUFDO0lBQ3JCLENBQUMsQ0FBQyxDQUFDO0FBQ1AsQ0FBQztBQVBELDhCQU9DIiwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgS3ViZXJuZXRlc1ZlcnNpb24gfSBmcm9tIFwiYXdzLWNkay1saWIvYXdzLWVrc1wiO1xuaW1wb3J0IHsgY2xvbmVEZWVwV2l0aCB9IGZyb20gJ2xvZGFzaCc7XG5pbXBvcnQgKiBhcyBudXRpbCBmcm9tICdub2RlOnV0aWwvdHlwZXMnO1xuXG5leHBvcnQgY29uc3Qgc2V0UGF0aCA9IChvYmogOiBhbnksIHBhdGg6IHN0cmluZywgdmFsOiBhbnkpID0+IHsgXG4gICAgY29uc3Qga2V5cyA9IHBhdGguc3BsaXQoJy4nKTtcbiAgICBjb25zdCBsYXN0S2V5ID0ga2V5cy5wb3AoKSE7XG4gICAgY29uc3QgbGFzdE9iaiA9IGtleXMucmVkdWNlKChvYmosIGtleSkgPT4gXG4gICAgICAgIG9ialtrZXldID0gb2JqW2tleV0gfHwge30sIFxuICAgICAgICBvYmopOyBcbiAgICBsYXN0T2JqW2xhc3RLZXldID0gdmFsO1xufTtcblxuLyoqXG4gKiBDcmVhdGVzIGEgZGVlcCBjbG9uZSBvZiBhbiBvYmplY3QsIHJldGFpbmluZyB0eXBlcy4gXG4gKiBAcGFyYW0gc291cmNlIFxuICogQHBhcmFtIHJlc29sdmVGbiBpZiBwYXNzZWQsIHRoaXMgZnVuY3Rpb24gY2FuIHBlcmZvcm0gdHJhbnNmb3JtYXRpb24gKGUuZy4gcmVzb2x2ZSBwcm94aWVzKVxuICogQHJldHVybnMgXG4gKi9cbmV4cG9ydCBmdW5jdGlvbiBjbG9uZURlZXA8VD4oc291cmNlOiBULCByZXNvbHZlRm4/OiAoYXJnOiBhbnkpID0+IGFueSApOiBUIHtcbiAgICByZXR1cm4gY2xvbmVEZWVwV2l0aChzb3VyY2UsICh2YWx1ZSkgPT4ge1xuICAgICAgICBpZih2YWx1ZSAmJiAodmFsdWUgaW5zdGFuY2VvZiBLdWJlcm5ldGVzVmVyc2lvbiB8fCBudXRpbC5pc1Byb3h5KHZhbHVlKSkpIHtcbiAgICAgICAgICAgIHJldHVybiByZXNvbHZlRm4gPyByZXNvbHZlRm4odmFsdWUpIDogdmFsdWU7XG4gICAgICAgIH1cbiAgICAgICAgcmV0dXJuIHVuZGVmaW5lZDtcbiAgICB9KTtcbn1cblxuZXhwb3J0IHR5cGUgV3JpdGVhYmxlPFQ+ID0geyAtcmVhZG9ubHkgW1AgaW4ga2V5b2YgVF06IFRbUF0gfTsiXX0=
