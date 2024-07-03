@@ -1,0 +1,39 @@
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.SecretsStoreAddOn = void 0;
+const csi_driver_provider_aws_1 = require("./csi-driver-provider-aws");
+const utils_1 = require("../../utils");
+/**
+ * Defaults options for the add-on
+ */
+const defaultProps = {
+    ascpUrl: 'https://raw.githubusercontent.com/aws/secrets-store-csi-driver-provider-aws/main/deployment/aws-provider-installer.yaml',
+    chart: 'secrets-store-csi-driver',
+    name: 'secrets-store-csi-driver',
+    namespace: 'kube-system',
+    version: '1.4.4',
+    release: 'blueprints-addon-secret-store-csi-driver',
+    repository: 'https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts',
+    rotationPollInterval: undefined,
+    syncSecrets: true,
+};
+let SecretsStoreAddOn = class SecretsStoreAddOn {
+    constructor(props) {
+        this.options = (0, utils_1.cloneDeep)({ ...defaultProps, ...props });
+    }
+    deploy(clusterInfo) {
+        const csiDriverProviderAws = new csi_driver_provider_aws_1.CsiDriverProviderAws(this.options);
+        return Promise.resolve(csiDriverProviderAws.deploy(clusterInfo));
+    }
+};
+exports.SecretsStoreAddOn = SecretsStoreAddOn;
+exports.SecretsStoreAddOn = SecretsStoreAddOn = __decorate([
+    utils_1.supportsALL
+], SecretsStoreAddOn);
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaW5kZXguanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi8uLi9saWIvYWRkb25zL3NlY3JldHMtc3RvcmUvaW5kZXgudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7O0FBR0EsdUVBQWlFO0FBQ2pFLHVDQUFxRDtBQW9DckQ7O0dBRUc7QUFDSCxNQUFNLFlBQVksR0FBMkI7SUFDekMsT0FBTyxFQUFFLHlIQUF5SDtJQUNsSSxLQUFLLEVBQUUsMEJBQTBCO0lBQ2pDLElBQUksRUFBRSwwQkFBMEI7SUFDaEMsU0FBUyxFQUFFLGFBQWE7SUFDeEIsT0FBTyxFQUFFLE9BQU87SUFDaEIsT0FBTyxFQUFFLDBDQUEwQztJQUNuRCxVQUFVLEVBQUUsbUVBQW1FO0lBQy9FLG9CQUFvQixFQUFFLFNBQVM7SUFDL0IsV0FBVyxFQUFFLElBQUk7Q0FDcEIsQ0FBQztBQUdLLElBQU0saUJBQWlCLEdBQXZCLE1BQU0saUJBQWlCO0lBSTFCLFlBQVksS0FBOEI7UUFDdEMsSUFBSSxDQUFDLE9BQU8sR0FBRyxJQUFBLGlCQUFTLEVBQUMsRUFBRSxHQUFHLFlBQVksRUFBRSxHQUFHLEtBQUssRUFBRSxDQUFDLENBQUM7SUFDNUQsQ0FBQztJQUVELE1BQU0sQ0FBQyxXQUF3QjtRQUMzQixNQUFNLG9CQUFvQixHQUFHLElBQUksOENBQW9CLENBQUMsSUFBSSxDQUFDLE9BQU8sQ0FBQyxDQUFDO1FBQ3BFLE9BQU8sT0FBTyxDQUFDLE9BQU8sQ0FBQyxvQkFBb0IsQ0FBQyxNQUFNLENBQUMsV0FBVyxDQUFDLENBQUMsQ0FBQztJQUNyRSxDQUFDO0NBQ0osQ0FBQTtBQVpZLDhDQUFpQjs0QkFBakIsaUJBQWlCO0lBRDdCLG1CQUFXO0dBQ0MsaUJBQWlCLENBWTdCIiwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgQ29uc3RydWN0IH0gZnJvbSBcImNvbnN0cnVjdHNcIjtcbmltcG9ydCB7IENsdXN0ZXJBZGRPbiwgQ2x1c3RlckluZm8gfSBmcm9tICcuLi8uLi9zcGknO1xuaW1wb3J0IHsgSGVsbUFkZE9uVXNlclByb3BzIH0gZnJvbSAnLi4vaGVsbS1hZGRvbic7XG5pbXBvcnQgeyBDc2lEcml2ZXJQcm92aWRlckF3cyB9IGZyb20gJy4vY3NpLWRyaXZlci1wcm92aWRlci1hd3MnO1xuaW1wb3J0IHsgY2xvbmVEZWVwLCBzdXBwb3J0c0FMTCB9IGZyb20gXCIuLi8uLi91dGlsc1wiO1xuXG4vKipcbiAqIENvbmZpZ3VyYXRpb24gb3B0aW9ucyBmb3IgU2VjcmV0cyBTdG9yZSBBZGRPblxuICovXG5leHBvcnQgaW50ZXJmYWNlIFNlY3JldHNTdG9yZUFkZE9uUHJvcHMgZXh0ZW5kcyBIZWxtQWRkT25Vc2VyUHJvcHMge1xuICAgIC8qKlxuICAgICAqIE5hbWVzcGFjZSB3aGVyZSBTZWNyZXRzIFN0b3JlIENTSSBkcml2ZXIgd2lsbCBiZSBpbnN0YWxsZWRcbiAgICAgKiBAZGVmYXVsdCAna3ViZS1zeXN0ZW0nXG4gICAgICovXG4gICAgcmVhZG9ubHkgbmFtZXNwYWNlPzogc3RyaW5nO1xuXG4gICAgLyoqXG4gICAgICogVmVyc2lvbiBvZiB0aGUgU2VjcmV0cyBTdG9yZSBDU0kgRHJpdmVyLiBFZy4gdjAuMC4yM1xuICAgICAqIEBkZWZhdWx0ICd2MC4wLjIzLydcbiAgICAgKi9cbiAgICByZWFkb25seSB2ZXJzaW9uPzogc3RyaW5nO1xuXG4gICAgLyoqXG4gICAgICogUm90YXRpb24gUG9sbCBJbnRlcnZhbCwgZS5nLiAnMTIwcycuXG4gICAgICogQGRlZmF1bHQgdW5kZWZpbmVkXG4gICAgICogSWYgcHJvdmlkZWQsIHNldHMgYXV0byByb3RhdGlvbiB0byB0cnVlIGFuZCBzZXRzIHRoZSBwb2xsaW5nIGludGVydmFsLlxuICAgICAqL1xuICAgIHJlYWRvbmx5IHJvdGF0aW9uUG9sbEludGVydmFsPzogc3RyaW5nO1xuXG4gICAgLyoqXG4gICAgICogRW5hYmxlIFN5bmMgU2VjcmV0cyB0byBrdWJlcm5ldGVzIHNlY3JldHNcbiAgICAgKi9cbiAgICByZWFkb25seSBzeW5jU2VjcmV0cz86IGJvb2xlYW47XG5cbiAgICAvKipcbiAgICAgKiBBU0NQIHNlY3JldCBhbmQgY29uZmlndXJhdGlvbiBwcm92aWRlciBVUkwgZm9yIHByb3Zpc2lvbmluZy5cbiAgICAgKi9cbiAgICByZWFkb25seSBhc2NwVXJsPzogc3RyaW5nXG59XG5cbi8qKlxuICogRGVmYXVsdHMgb3B0aW9ucyBmb3IgdGhlIGFkZC1vblxuICovXG5jb25zdCBkZWZhdWx0UHJvcHM6IFNlY3JldHNTdG9yZUFkZE9uUHJvcHMgPSB7XG4gICAgYXNjcFVybDogJ2h0dHBzOi8vcmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbS9hd3Mvc2VjcmV0cy1zdG9yZS1jc2ktZHJpdmVyLXByb3ZpZGVyLWF3cy9tYWluL2RlcGxveW1lbnQvYXdzLXByb3ZpZGVyLWluc3RhbGxlci55YW1sJyxcbiAgICBjaGFydDogJ3NlY3JldHMtc3RvcmUtY3NpLWRyaXZlcicsXG4gICAgbmFtZTogJ3NlY3JldHMtc3RvcmUtY3NpLWRyaXZlcicsXG4gICAgbmFtZXNwYWNlOiAna3ViZS1zeXN0ZW0nLFxuICAgIHZlcnNpb246ICcxLjQuNCcsXG4gICAgcmVsZWFzZTogJ2JsdWVwcmludHMtYWRkb24tc2VjcmV0LXN0b3JlLWNzaS1kcml2ZXInLFxuICAgIHJlcG9zaXRvcnk6ICdodHRwczovL2t1YmVybmV0ZXMtc2lncy5naXRodWIuaW8vc2VjcmV0cy1zdG9yZS1jc2ktZHJpdmVyL2NoYXJ0cycsXG4gICAgcm90YXRpb25Qb2xsSW50ZXJ2YWw6IHVuZGVmaW5lZCxcbiAgICBzeW5jU2VjcmV0czogdHJ1ZSxcbn07XG5cbkBzdXBwb3J0c0FMTFxuZXhwb3J0IGNsYXNzIFNlY3JldHNTdG9yZUFkZE9uIGltcGxlbWVudHMgQ2x1c3RlckFkZE9uIHtcblxuICAgIHByaXZhdGUgb3B0aW9uczogU2VjcmV0c1N0b3JlQWRkT25Qcm9wcztcblxuICAgIGNvbnN0cnVjdG9yKHByb3BzPzogU2VjcmV0c1N0b3JlQWRkT25Qcm9wcykge1xuICAgICAgICB0aGlzLm9wdGlvbnMgPSBjbG9uZURlZXAoeyAuLi5kZWZhdWx0UHJvcHMsIC4uLnByb3BzIH0pO1xuICAgIH1cblxuICAgIGRlcGxveShjbHVzdGVySW5mbzogQ2x1c3RlckluZm8pOiBQcm9taXNlPENvbnN0cnVjdD4ge1xuICAgICAgICBjb25zdCBjc2lEcml2ZXJQcm92aWRlckF3cyA9IG5ldyBDc2lEcml2ZXJQcm92aWRlckF3cyh0aGlzLm9wdGlvbnMpO1xuICAgICAgICByZXR1cm4gUHJvbWlzZS5yZXNvbHZlKGNzaURyaXZlclByb3ZpZGVyQXdzLmRlcGxveShjbHVzdGVySW5mbykpO1xuICAgIH1cbn1cbiJdfQ==

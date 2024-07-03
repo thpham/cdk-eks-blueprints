@@ -1,0 +1,38 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.MngClusterProvider = void 0;
+exports.assertEC2NodeGroup = assertEC2NodeGroup;
+const generic_cluster_provider_1 = require("./generic-cluster-provider");
+/**
+ * MngClusterProvider provisions an EKS cluster with a managed node group for managed capacity.
+ */
+class MngClusterProvider extends generic_cluster_provider_1.GenericClusterProvider {
+    constructor(props) {
+        var _a, _b;
+        super({ ...generic_cluster_provider_1.defaultOptions, ...props, ...{
+                managedNodeGroups: [{
+                        ...props,
+                        id: (_b = (_a = props === null || props === void 0 ? void 0 : props.id) !== null && _a !== void 0 ? _a : props === null || props === void 0 ? void 0 : props.clusterName) !== null && _b !== void 0 ? _b : "eks-blueprints-mng",
+                        tags: props === null || props === void 0 ? void 0 : props.nodeGroupTags,
+                    }]
+            } });
+    }
+}
+exports.MngClusterProvider = MngClusterProvider;
+/**
+ * Validates that cluster is backed by EC2 either through a managed node group or through a self-managed autoscaling group.
+ * @param clusterInfo
+ * @param source Used for error message to identify the source of the check
+ * @returns
+ */
+//TODO: move to clusterInfo
+function assertEC2NodeGroup(clusterInfo, source) {
+    if (clusterInfo.nodeGroups != undefined && clusterInfo.nodeGroups.length > 0) {
+        return clusterInfo.nodeGroups;
+    }
+    if (clusterInfo.autoscalingGroups != undefined && clusterInfo.autoscalingGroups.length > 0) {
+        return clusterInfo.autoscalingGroups;
+    }
+    throw new Error(`${source} is supported with EKS EC2 only and is not supported for imported clusters`);
+}
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoibW5nLWNsdXN0ZXItcHJvdmlkZXIuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi9saWIvY2x1c3Rlci1wcm92aWRlcnMvbW5nLWNsdXN0ZXItcHJvdmlkZXIudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7O0FBcUVBLGdEQVFDO0FBMUVELHlFQUFvRjtBQTJDcEY7O0dBRUc7QUFDSCxNQUFhLGtCQUFtQixTQUFRLGlEQUFzQjtJQUUxRCxZQUFZLEtBQStCOztRQUN2QyxLQUFLLENBQUMsRUFBQyxHQUFHLHlDQUFjLEVBQUUsR0FBRyxLQUFLLEVBQUUsR0FBRztnQkFDbkMsaUJBQWlCLEVBQUUsQ0FBQzt3QkFDaEIsR0FBRyxLQUE4Qzt3QkFDakQsRUFBRSxFQUFFLE1BQUEsTUFBQSxLQUFLLGFBQUwsS0FBSyx1QkFBTCxLQUFLLENBQUUsRUFBRSxtQ0FBSSxLQUFLLGFBQUwsS0FBSyx1QkFBTCxLQUFLLENBQUUsV0FBVyxtQ0FBSSxvQkFBb0I7d0JBQzNELElBQUksRUFBRSxLQUFLLGFBQUwsS0FBSyx1QkFBTCxLQUFLLENBQUUsYUFBYTtxQkFDN0IsQ0FBQzthQUNMLEVBQUMsQ0FBQyxDQUFDO0lBQ1IsQ0FBQztDQUNKO0FBWEQsZ0RBV0M7QUFFRDs7Ozs7R0FLRztBQUNILDJCQUEyQjtBQUMzQixTQUFnQixrQkFBa0IsQ0FBQyxXQUF3QixFQUFFLE1BQWM7SUFDdkUsSUFBRyxXQUFXLENBQUMsVUFBVSxJQUFJLFNBQVMsSUFBSSxXQUFXLENBQUMsVUFBVSxDQUFDLE1BQU0sR0FBRyxDQUFDLEVBQUUsQ0FBQztRQUMxRSxPQUFPLFdBQVcsQ0FBQyxVQUFVLENBQUM7SUFDbEMsQ0FBQztJQUNELElBQUcsV0FBVyxDQUFDLGlCQUFpQixJQUFJLFNBQVMsSUFBSSxXQUFXLENBQUMsaUJBQWlCLENBQUMsTUFBTSxHQUFHLENBQUMsRUFBRSxDQUFDO1FBQ3hGLE9BQU8sV0FBVyxDQUFDLGlCQUFpQixDQUFDO0lBQ3pDLENBQUM7SUFDRCxNQUFNLElBQUksS0FBSyxDQUFDLEdBQUcsTUFBTSw0RUFBNEUsQ0FBQyxDQUFDO0FBQzNHLENBQUMiLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBhd3NfYXV0b3NjYWxpbmcgYXMgYXNnLCBhd3NfZWtzIGFzIGVrcyB9IGZyb20gXCJhd3MtY2RrLWxpYlwiO1xuLy8gQ2x1c3RlclxuaW1wb3J0IHsgQ2x1c3RlckluZm8gfSBmcm9tIFwiLi5cIjtcbmltcG9ydCB7IGRlZmF1bHRPcHRpb25zLCBHZW5lcmljQ2x1c3RlclByb3ZpZGVyIH0gZnJvbSBcIi4vZ2VuZXJpYy1jbHVzdGVyLXByb3ZpZGVyXCI7XG4vLyBDb25zdGFudHMgXG5pbXBvcnQgeyBNYW5hZ2VkTm9kZUdyb3VwIH0gZnJvbSBcIi4vdHlwZXNcIjtcblxuXG4vKipcbiAqIENvbmZpZ3VyYXRpb24gb3B0aW9ucyBmb3IgdGhlIGNsdXN0ZXIgcHJvdmlkZXIuXG4gKi9cbmV4cG9ydCBpbnRlcmZhY2UgTW5nQ2x1c3RlclByb3ZpZGVyUHJvcHMgZXh0ZW5kcyBQYXJ0aWFsPGVrcy5Db21tb25DbHVzdGVyT3B0aW9ucz4sIE9taXQ8TWFuYWdlZE5vZGVHcm91cCwgXCJpZFwiPiB7XG4gICAgLyoqXG4gICAgKiBUaGUgbmFtZSBmb3IgdGhlIGNsdXN0ZXIuXG4gICAgKiBAZGVwcmVjYXRlZCB1c2UgI2NsdXN0ZXJOYW1lXG4gICAgKi9cbiAgICBuYW1lPzogc3RyaW5nO1xuXG4gICAgLyoqXG4gICAgICogSW4gdGhpcyBjYXNlIGlkIGlzIG9wdGlvbmFsIGFuZCBkZWZhdWx0cyB0cCB0aGUgY2x1c3RlciBuYW1lXG4gICAgICovXG4gICAgaWQ/OiBzdHJpbmcsXG5cbiAgICAvKipcbiAgICAgKiBJcyBpdCBhIHByaXZhdGUgb25seSBFS1MgQ2x1c3Rlcj9cbiAgICAgKiBEZWZhdWx0cyB0byBwcml2YXRlX2FuZF9wdWJsaWMgY2x1c3Rlciwgc2V0IHRvIHRydWUgZm9yIHByaXZhdGUgY2x1c3RlclxuICAgICAqIEBkZWZhdWx0IGZhbHNlXG4gICAgICovXG4gICAgcHJpdmF0ZUNsdXN0ZXI/OiBib29sZWFuO1xuXG4gICAgLyoqXG4gICAgICogVGFncyBmb3IgdGhlIENsdXN0ZXIuXG4gICAgICovXG4gICAgdGFncz86IHtcbiAgICAgICAgW2tleTogc3RyaW5nXTogc3RyaW5nO1xuICAgIH1cblxuICAgIC8qKlxuICAgICAqIFRhZ3MgZm9yIHRoZSBub2RlIGdyb3VwLlxuICAgICAqL1xuICAgIG5vZGVHcm91cFRhZ3M/OiB7XG4gICAgICAgIFtrZXk6IHN0cmluZ106IHN0cmluZztcbiAgICB9XG5cbn1cblxuLyoqXG4gKiBNbmdDbHVzdGVyUHJvdmlkZXIgcHJvdmlzaW9ucyBhbiBFS1MgY2x1c3RlciB3aXRoIGEgbWFuYWdlZCBub2RlIGdyb3VwIGZvciBtYW5hZ2VkIGNhcGFjaXR5LlxuICovXG5leHBvcnQgY2xhc3MgTW5nQ2x1c3RlclByb3ZpZGVyIGV4dGVuZHMgR2VuZXJpY0NsdXN0ZXJQcm92aWRlciB7XG5cbiAgICBjb25zdHJ1Y3Rvcihwcm9wcz86IE1uZ0NsdXN0ZXJQcm92aWRlclByb3BzKSB7XG4gICAgICAgIHN1cGVyKHsuLi5kZWZhdWx0T3B0aW9ucywgLi4ucHJvcHMsIC4uLntcbiAgICAgICAgICAgIG1hbmFnZWROb2RlR3JvdXBzOiBbe1xuICAgICAgICAgICAgICAgIC4uLnByb3BzIGFzIE9taXQ8TWFuYWdlZE5vZGVHcm91cCwgXCJpZFwiIHwgXCJ0YWdzXCI+LFxuICAgICAgICAgICAgICAgIGlkOiBwcm9wcz8uaWQgPz8gcHJvcHM/LmNsdXN0ZXJOYW1lID8/IFwiZWtzLWJsdWVwcmludHMtbW5nXCIsXG4gICAgICAgICAgICAgICAgdGFnczogcHJvcHM/Lm5vZGVHcm91cFRhZ3MsXG4gICAgICAgICAgICB9XVxuICAgICAgICB9fSk7XG4gICAgfVxufVxuXG4vKipcbiAqIFZhbGlkYXRlcyB0aGF0IGNsdXN0ZXIgaXMgYmFja2VkIGJ5IEVDMiBlaXRoZXIgdGhyb3VnaCBhIG1hbmFnZWQgbm9kZSBncm91cCBvciB0aHJvdWdoIGEgc2VsZi1tYW5hZ2VkIGF1dG9zY2FsaW5nIGdyb3VwLlxuICogQHBhcmFtIGNsdXN0ZXJJbmZvIFxuICogQHBhcmFtIHNvdXJjZSBVc2VkIGZvciBlcnJvciBtZXNzYWdlIHRvIGlkZW50aWZ5IHRoZSBzb3VyY2Ugb2YgdGhlIGNoZWNrXG4gKiBAcmV0dXJucyBcbiAqL1xuLy9UT0RPOiBtb3ZlIHRvIGNsdXN0ZXJJbmZvXG5leHBvcnQgZnVuY3Rpb24gYXNzZXJ0RUMyTm9kZUdyb3VwKGNsdXN0ZXJJbmZvOiBDbHVzdGVySW5mbywgc291cmNlOiBzdHJpbmcpOiBla3MuTm9kZWdyb3VwW10gfCBhc2cuQXV0b1NjYWxpbmdHcm91cFtdIHtcbiAgICBpZihjbHVzdGVySW5mby5ub2RlR3JvdXBzICE9IHVuZGVmaW5lZCAmJiBjbHVzdGVySW5mby5ub2RlR3JvdXBzLmxlbmd0aCA+IDApIHtcbiAgICAgICAgcmV0dXJuIGNsdXN0ZXJJbmZvLm5vZGVHcm91cHM7XG4gICAgfVxuICAgIGlmKGNsdXN0ZXJJbmZvLmF1dG9zY2FsaW5nR3JvdXBzICE9IHVuZGVmaW5lZCAmJiBjbHVzdGVySW5mby5hdXRvc2NhbGluZ0dyb3Vwcy5sZW5ndGggPiAwKSB7XG4gICAgICAgIHJldHVybiBjbHVzdGVySW5mby5hdXRvc2NhbGluZ0dyb3VwcztcbiAgICB9XG4gICAgdGhyb3cgbmV3IEVycm9yKGAke3NvdXJjZX0gaXMgc3VwcG9ydGVkIHdpdGggRUtTIEVDMiBvbmx5IGFuZCBpcyBub3Qgc3VwcG9ydGVkIGZvciBpbXBvcnRlZCBjbHVzdGVyc2ApO1xufVxuIl19

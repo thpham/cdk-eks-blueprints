@@ -1,0 +1,79 @@
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.EfsCsiDriverAddOn = void 0;
+const helm_addon_1 = require("../helm-addon");
+const iam_policy_1 = require("./iam-policy");
+const registry_utils_1 = require("../../utils/registry-utils");
+const iam = require("aws-cdk-lib/aws-iam");
+const utils_1 = require("../../utils");
+const EFS_CSI_DRIVER = "aws-efs-csi-driver";
+const EFS_CSI_CONTROLLER_SA = "efs-csi-controller-sa";
+const EFS_REGISTRY_SUFFIX = "eks/aws-efs-csi-driver";
+/**
+ * Defaults options for the add-on
+ */
+const defaultProps = {
+    version: '3.0.6',
+    namespace: "kube-system",
+    repository: "https://kubernetes-sigs.github.io/aws-efs-csi-driver/",
+    name: EFS_CSI_DRIVER,
+    chart: EFS_CSI_DRIVER,
+    replicaCount: 2
+};
+let EfsCsiDriverAddOn = class EfsCsiDriverAddOn extends helm_addon_1.HelmAddOn {
+    constructor(props) {
+        super({ ...defaultProps, ...props });
+        this.options = this.props;
+    }
+    deploy(clusterInfo) {
+        var _a;
+        // Create service account and policy
+        const cluster = clusterInfo.cluster;
+        const serviceAccount = cluster.addServiceAccount(EFS_CSI_CONTROLLER_SA, {
+            name: EFS_CSI_CONTROLLER_SA,
+            namespace: this.options.namespace,
+        });
+        (0, iam_policy_1.getEfsDriverPolicyStatements)((_a = this.options) === null || _a === void 0 ? void 0 : _a.kmsKeys).forEach((statement) => {
+            serviceAccount.addToPrincipalPolicy(iam.PolicyStatement.fromJson(statement));
+        });
+        // Lookup appropriate image repo
+        const repo = registry_utils_1.registries.get(clusterInfo.cluster.stack.region) + EFS_REGISTRY_SUFFIX;
+        // setup value for helm chart
+        const chartValues = populateValues(this.options, cluster.clusterName, serviceAccount.serviceAccountName, repo);
+        // Define chart
+        const efsCsiDriverChart = this.addHelmChart(clusterInfo, chartValues);
+        efsCsiDriverChart.node.addDependency(serviceAccount);
+        // return the Promise Construct for any teams that may depend on this
+        return Promise.resolve(efsCsiDriverChart);
+    }
+};
+exports.EfsCsiDriverAddOn = EfsCsiDriverAddOn;
+exports.EfsCsiDriverAddOn = EfsCsiDriverAddOn = __decorate([
+    utils_1.supportsALL
+], EfsCsiDriverAddOn);
+/**
+ * populateValues populates the appropriate values used to customize the Helm chart
+ * @param helmOptions User provided values to customize the chart
+ * @param clusterName Name of the cluster where to deploy the add-on
+ * @param serviceAccountName Name of the service account used by the add-on
+ * @param repository Repository to pull image for Add_on
+ */
+function populateValues(helmOptions, clusterName, serviceAccountName, repository) {
+    var _a;
+    const values = (_a = helmOptions.values) !== null && _a !== void 0 ? _a : {};
+    (0, utils_1.setPath)(values, "clusterName", clusterName);
+    (0, utils_1.setPath)(values, "controller.serviceAccount.create", false);
+    (0, utils_1.setPath)(values, "controller.serviceAccount.name", serviceAccountName);
+    (0, utils_1.setPath)(values, "node.serviceAccount.create", false);
+    (0, utils_1.setPath)(values, "node.serviceAccount.name", serviceAccountName);
+    (0, utils_1.setPath)(values, "replicaCount", helmOptions.replicaCount);
+    (0, utils_1.setPath)(values, "image.repository", repository);
+    return values;
+}
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaW5kZXguanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi8uLi9saWIvYWRkb25zL2Vmcy1jc2ktZHJpdmVyL2luZGV4LnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7Ozs7Ozs7OztBQUVBLDhDQUE4RDtBQUM5RCw2Q0FBNEQ7QUFDNUQsK0RBQXlEO0FBQ3pELDJDQUEyQztBQUMzQyx1Q0FBa0Q7QUFJbEQsTUFBTSxjQUFjLEdBQUcsb0JBQW9CLENBQUM7QUFDNUMsTUFBTSxxQkFBcUIsR0FBRyx1QkFBdUIsQ0FBQztBQUN0RCxNQUFNLG1CQUFtQixHQUFHLHdCQUF3QixDQUFDO0FBdUJyRDs7R0FFRztBQUNILE1BQU0sWUFBWSxHQUFzQjtJQUNwQyxPQUFPLEVBQUUsT0FBTztJQUNoQixTQUFTLEVBQUUsYUFBYTtJQUN4QixVQUFVLEVBQUUsdURBQXVEO0lBQ25FLElBQUksRUFBRSxjQUFjO0lBQ3BCLEtBQUssRUFBRSxjQUFjO0lBQ3JCLFlBQVksRUFBRSxDQUFDO0NBQ2xCLENBQUM7QUFHSyxJQUFNLGlCQUFpQixHQUF2QixNQUFNLGlCQUFrQixTQUFRLHNCQUFTO0lBSTVDLFlBQVksS0FBeUI7UUFDakMsS0FBSyxDQUFDLEVBQUUsR0FBRyxZQUFtQixFQUFFLEdBQUcsS0FBSyxFQUFFLENBQUMsQ0FBQztRQUM1QyxJQUFJLENBQUMsT0FBTyxHQUFHLElBQUksQ0FBQyxLQUEwQixDQUFDO0lBQ25ELENBQUM7SUFFRCxNQUFNLENBQUMsV0FBd0I7O1FBQzNCLG9DQUFvQztRQUNwQyxNQUFNLE9BQU8sR0FBRyxXQUFXLENBQUMsT0FBTyxDQUFDO1FBQ3BDLE1BQU0sY0FBYyxHQUFHLE9BQU8sQ0FBQyxpQkFBaUIsQ0FBQyxxQkFBcUIsRUFBRTtZQUNwRSxJQUFJLEVBQUUscUJBQXFCO1lBQzNCLFNBQVMsRUFBRSxJQUFJLENBQUMsT0FBTyxDQUFDLFNBQVM7U0FDcEMsQ0FBQyxDQUFDO1FBQ0gsSUFBQSx5Q0FBNEIsRUFBQyxNQUFBLElBQUksQ0FBQyxPQUFPLDBDQUFFLE9BQU8sQ0FBQyxDQUFDLE9BQU8sQ0FBQyxDQUFDLFNBQVMsRUFBRSxFQUFFO1lBQ3RFLGNBQWMsQ0FBQyxvQkFBb0IsQ0FBQyxHQUFHLENBQUMsZUFBZSxDQUFDLFFBQVEsQ0FBQyxTQUFTLENBQUMsQ0FBQyxDQUFDO1FBQ2pGLENBQUMsQ0FBQyxDQUFDO1FBR0gsZ0NBQWdDO1FBQ2hDLE1BQU0sSUFBSSxHQUFHLDJCQUFVLENBQUMsR0FBRyxDQUFDLFdBQVcsQ0FBQyxPQUFPLENBQUMsS0FBSyxDQUFDLE1BQU0sQ0FBQyxHQUFHLG1CQUFtQixDQUFDO1FBQ3BGLDZCQUE2QjtRQUM3QixNQUFNLFdBQVcsR0FBRyxjQUFjLENBQUMsSUFBSSxDQUFDLE9BQU8sRUFBRSxPQUFPLENBQUMsV0FBVyxFQUFFLGNBQWMsQ0FBQyxrQkFBa0IsRUFBRSxJQUFJLENBQUMsQ0FBQztRQUUvRyxlQUFlO1FBQ2YsTUFBTSxpQkFBaUIsR0FBRyxJQUFJLENBQUMsWUFBWSxDQUFDLFdBQVcsRUFBRSxXQUFXLENBQUMsQ0FBQztRQUV0RSxpQkFBaUIsQ0FBQyxJQUFJLENBQUMsYUFBYSxDQUFDLGNBQWMsQ0FBQyxDQUFDO1FBQ3JELHFFQUFxRTtRQUNyRSxPQUFPLE9BQU8sQ0FBQyxPQUFPLENBQUMsaUJBQWlCLENBQUMsQ0FBQztJQUM5QyxDQUFDO0NBQ0osQ0FBQTtBQWpDWSw4Q0FBaUI7NEJBQWpCLGlCQUFpQjtJQUQ3QixtQkFBVztHQUNDLGlCQUFpQixDQWlDN0I7QUFFRDs7Ozs7O0dBTUc7QUFDSCxTQUFTLGNBQWMsQ0FBQyxXQUE4QixFQUFFLFdBQW1CLEVBQ25ELGtCQUEwQixFQUFFLFVBQWtCOztJQUNsRSxNQUFNLE1BQU0sR0FBRyxNQUFBLFdBQVcsQ0FBQyxNQUFNLG1DQUFJLEVBQUUsQ0FBQztJQUV4QyxJQUFBLGVBQU8sRUFBQyxNQUFNLEVBQUUsYUFBYSxFQUFHLFdBQVcsQ0FBQyxDQUFDO0lBQzdDLElBQUEsZUFBTyxFQUFDLE1BQU0sRUFBRSxrQ0FBa0MsRUFBRyxLQUFLLENBQUMsQ0FBQztJQUM1RCxJQUFBLGVBQU8sRUFBQyxNQUFNLEVBQUUsZ0NBQWdDLEVBQUcsa0JBQWtCLENBQUMsQ0FBQztJQUN2RSxJQUFBLGVBQU8sRUFBQyxNQUFNLEVBQUUsNEJBQTRCLEVBQUcsS0FBSyxDQUFDLENBQUM7SUFDdEQsSUFBQSxlQUFPLEVBQUMsTUFBTSxFQUFFLDBCQUEwQixFQUFHLGtCQUFrQixDQUFDLENBQUM7SUFDakUsSUFBQSxlQUFPLEVBQUMsTUFBTSxFQUFFLGNBQWMsRUFBRyxXQUFXLENBQUMsWUFBWSxDQUFDLENBQUM7SUFDM0QsSUFBQSxlQUFPLEVBQUMsTUFBTSxFQUFFLGtCQUFrQixFQUFHLFVBQVUsQ0FBQyxDQUFDO0lBRWpELE9BQU8sTUFBTSxDQUFDO0FBQ2xCLENBQUMiLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBDb25zdHJ1Y3QgfSBmcm9tIFwiY29uc3RydWN0c1wiO1xuaW1wb3J0IHsgQ2x1c3RlckluZm8sIFZhbHVlc30gZnJvbSBcIi4uLy4uL3NwaVwiO1xuaW1wb3J0IHsgSGVsbUFkZE9uLCBIZWxtQWRkT25Vc2VyUHJvcHMgfSBmcm9tIFwiLi4vaGVsbS1hZGRvblwiO1xuaW1wb3J0IHsgZ2V0RWZzRHJpdmVyUG9saWN5U3RhdGVtZW50cyB9IGZyb20gXCIuL2lhbS1wb2xpY3lcIjtcbmltcG9ydCB7IHJlZ2lzdHJpZXMgfSAgZnJvbSBcIi4uLy4uL3V0aWxzL3JlZ2lzdHJ5LXV0aWxzXCI7XG5pbXBvcnQgKiBhcyBpYW0gZnJvbSBcImF3cy1jZGstbGliL2F3cy1pYW1cIjtcbmltcG9ydCB7IHNldFBhdGgsIHN1cHBvcnRzQUxMfSBmcm9tIFwiLi4vLi4vdXRpbHNcIjtcbmltcG9ydCAqIGFzIGttcyBmcm9tIFwiYXdzLWNkay1saWIvYXdzLWttc1wiO1xuXG5cbmNvbnN0IEVGU19DU0lfRFJJVkVSID0gXCJhd3MtZWZzLWNzaS1kcml2ZXJcIjtcbmNvbnN0IEVGU19DU0lfQ09OVFJPTExFUl9TQSA9IFwiZWZzLWNzaS1jb250cm9sbGVyLXNhXCI7XG5jb25zdCBFRlNfUkVHSVNUUllfU1VGRklYID0gXCJla3MvYXdzLWVmcy1jc2ktZHJpdmVyXCI7XG5cbi8qKlxuICogQ29uZmlndXJhdGlvbiBvcHRpb25zIGZvciB0aGUgYWRkLW9uLlxuICovXG5leHBvcnQgaW50ZXJmYWNlIEVmc0NzaURyaXZlclByb3BzIGV4dGVuZHMgSGVsbUFkZE9uVXNlclByb3BzIHtcbiAgICAvKipcbiAgICAgKiBWZXJzaW9uIG9mIHRoZSBkcml2ZXIgdG8gZGVwbG95LiBVc2VzIGNoYXJ0IHZlcnNpb24gMi4yLjMgYnkgZGVmYXVsdCBpZiB0aGlzIHZhbHVlIGlzIG5vdCBwcm92aWRlZFxuICAgICAqL1xuICAgIHZlcnNpb24/OiBzdHJpbmcsXG4gICAgLyoqKlxuICAgICAqIE51bWJlciBvZiByZXBsaWNhcyB0byBiZSBkZXBsb3llZC4gSWYgbm90IHByb3ZpZGVkLCBpdCBkZWZhdWx0cyB0byAyLiBOb3RlIHRoYXQgdGhlIG51bWJlciBvZiByZXBsaWNhc1xuICAgICAqIHNob3VsZCBiZSBsZXNzIHRoYW4gb3IgZXF1YWwgdG8gdGhlIG51bWJlciBvZiBub2RlcyBpbiB0aGUgY2x1c3RlciBvdGhlcndpc2Ugc29tZVxuICAgICAqIHBvZHMgd2lsbCBiZSBsZWZ0IG9mIHBlbmRpbmcgc3RhdGVcbiAgICAgKi9cbiAgICByZXBsaWNhQ291bnQ/OiBudW1iZXJcbiAgICAvKipcbiAgICAgKiBMaXN0IG9mIEtNUyBrZXlzIHRvIGJlIHVzZWQgZm9yIGVuY3J5cHRpb25cbiAgICAgKi9cbiAgICBrbXNLZXlzPzoga21zLktleVtdO1xuXG59XG5cbi8qKlxuICogRGVmYXVsdHMgb3B0aW9ucyBmb3IgdGhlIGFkZC1vblxuICovXG5jb25zdCBkZWZhdWx0UHJvcHM6IEVmc0NzaURyaXZlclByb3BzID0ge1xuICAgIHZlcnNpb246ICczLjAuNicsXG4gICAgbmFtZXNwYWNlOiBcImt1YmUtc3lzdGVtXCIsXG4gICAgcmVwb3NpdG9yeTogXCJodHRwczovL2t1YmVybmV0ZXMtc2lncy5naXRodWIuaW8vYXdzLWVmcy1jc2ktZHJpdmVyL1wiLFxuICAgIG5hbWU6IEVGU19DU0lfRFJJVkVSLFxuICAgIGNoYXJ0OiBFRlNfQ1NJX0RSSVZFUixcbiAgICByZXBsaWNhQ291bnQ6IDJcbn07XG5cbkBzdXBwb3J0c0FMTFxuZXhwb3J0IGNsYXNzIEVmc0NzaURyaXZlckFkZE9uIGV4dGVuZHMgSGVsbUFkZE9uIHtcblxuICAgIHJlYWRvbmx5IG9wdGlvbnM6IEVmc0NzaURyaXZlclByb3BzO1xuXG4gICAgY29uc3RydWN0b3IocHJvcHM/OiBFZnNDc2lEcml2ZXJQcm9wcykge1xuICAgICAgICBzdXBlcih7IC4uLmRlZmF1bHRQcm9wcyBhcyBhbnksIC4uLnByb3BzIH0pO1xuICAgICAgICB0aGlzLm9wdGlvbnMgPSB0aGlzLnByb3BzIGFzIEVmc0NzaURyaXZlclByb3BzO1xuICAgIH1cblxuICAgIGRlcGxveShjbHVzdGVySW5mbzogQ2x1c3RlckluZm8pOiBQcm9taXNlPENvbnN0cnVjdD4ge1xuICAgICAgICAvLyBDcmVhdGUgc2VydmljZSBhY2NvdW50IGFuZCBwb2xpY3lcbiAgICAgICAgY29uc3QgY2x1c3RlciA9IGNsdXN0ZXJJbmZvLmNsdXN0ZXI7XG4gICAgICAgIGNvbnN0IHNlcnZpY2VBY2NvdW50ID0gY2x1c3Rlci5hZGRTZXJ2aWNlQWNjb3VudChFRlNfQ1NJX0NPTlRST0xMRVJfU0EsIHtcbiAgICAgICAgICAgIG5hbWU6IEVGU19DU0lfQ09OVFJPTExFUl9TQSxcbiAgICAgICAgICAgIG5hbWVzcGFjZTogdGhpcy5vcHRpb25zLm5hbWVzcGFjZSxcbiAgICAgICAgfSk7XG4gICAgICAgIGdldEVmc0RyaXZlclBvbGljeVN0YXRlbWVudHModGhpcy5vcHRpb25zPy5rbXNLZXlzKS5mb3JFYWNoKChzdGF0ZW1lbnQpID0+IHtcbiAgICAgICAgICAgIHNlcnZpY2VBY2NvdW50LmFkZFRvUHJpbmNpcGFsUG9saWN5KGlhbS5Qb2xpY3lTdGF0ZW1lbnQuZnJvbUpzb24oc3RhdGVtZW50KSk7XG4gICAgICAgIH0pO1xuXG5cbiAgICAgICAgLy8gTG9va3VwIGFwcHJvcHJpYXRlIGltYWdlIHJlcG9cbiAgICAgICAgY29uc3QgcmVwbyA9IHJlZ2lzdHJpZXMuZ2V0KGNsdXN0ZXJJbmZvLmNsdXN0ZXIuc3RhY2sucmVnaW9uKSArIEVGU19SRUdJU1RSWV9TVUZGSVg7XG4gICAgICAgIC8vIHNldHVwIHZhbHVlIGZvciBoZWxtIGNoYXJ0XG4gICAgICAgIGNvbnN0IGNoYXJ0VmFsdWVzID0gcG9wdWxhdGVWYWx1ZXModGhpcy5vcHRpb25zLCBjbHVzdGVyLmNsdXN0ZXJOYW1lLCBzZXJ2aWNlQWNjb3VudC5zZXJ2aWNlQWNjb3VudE5hbWUsIHJlcG8pO1xuXG4gICAgICAgIC8vIERlZmluZSBjaGFydFxuICAgICAgICBjb25zdCBlZnNDc2lEcml2ZXJDaGFydCA9IHRoaXMuYWRkSGVsbUNoYXJ0KGNsdXN0ZXJJbmZvLCBjaGFydFZhbHVlcyk7XG5cbiAgICAgICAgZWZzQ3NpRHJpdmVyQ2hhcnQubm9kZS5hZGREZXBlbmRlbmN5KHNlcnZpY2VBY2NvdW50KTtcbiAgICAgICAgLy8gcmV0dXJuIHRoZSBQcm9taXNlIENvbnN0cnVjdCBmb3IgYW55IHRlYW1zIHRoYXQgbWF5IGRlcGVuZCBvbiB0aGlzXG4gICAgICAgIHJldHVybiBQcm9taXNlLnJlc29sdmUoZWZzQ3NpRHJpdmVyQ2hhcnQpO1xuICAgIH1cbn1cblxuLyoqXG4gKiBwb3B1bGF0ZVZhbHVlcyBwb3B1bGF0ZXMgdGhlIGFwcHJvcHJpYXRlIHZhbHVlcyB1c2VkIHRvIGN1c3RvbWl6ZSB0aGUgSGVsbSBjaGFydFxuICogQHBhcmFtIGhlbG1PcHRpb25zIFVzZXIgcHJvdmlkZWQgdmFsdWVzIHRvIGN1c3RvbWl6ZSB0aGUgY2hhcnRcbiAqIEBwYXJhbSBjbHVzdGVyTmFtZSBOYW1lIG9mIHRoZSBjbHVzdGVyIHdoZXJlIHRvIGRlcGxveSB0aGUgYWRkLW9uXG4gKiBAcGFyYW0gc2VydmljZUFjY291bnROYW1lIE5hbWUgb2YgdGhlIHNlcnZpY2UgYWNjb3VudCB1c2VkIGJ5IHRoZSBhZGQtb25cbiAqIEBwYXJhbSByZXBvc2l0b3J5IFJlcG9zaXRvcnkgdG8gcHVsbCBpbWFnZSBmb3IgQWRkX29uXG4gKi9cbmZ1bmN0aW9uIHBvcHVsYXRlVmFsdWVzKGhlbG1PcHRpb25zOiBFZnNDc2lEcml2ZXJQcm9wcywgY2x1c3Rlck5hbWU6IHN0cmluZyxcbiAgICAgICAgICAgICAgICAgICAgICAgIHNlcnZpY2VBY2NvdW50TmFtZTogc3RyaW5nLCByZXBvc2l0b3J5OiBzdHJpbmcpOiBWYWx1ZXMge1xuICAgIGNvbnN0IHZhbHVlcyA9IGhlbG1PcHRpb25zLnZhbHVlcyA/PyB7fTtcblxuICAgIHNldFBhdGgodmFsdWVzLCBcImNsdXN0ZXJOYW1lXCIsICBjbHVzdGVyTmFtZSk7XG4gICAgc2V0UGF0aCh2YWx1ZXMsIFwiY29udHJvbGxlci5zZXJ2aWNlQWNjb3VudC5jcmVhdGVcIiwgIGZhbHNlKTtcbiAgICBzZXRQYXRoKHZhbHVlcywgXCJjb250cm9sbGVyLnNlcnZpY2VBY2NvdW50Lm5hbWVcIiwgIHNlcnZpY2VBY2NvdW50TmFtZSk7XG4gICAgc2V0UGF0aCh2YWx1ZXMsIFwibm9kZS5zZXJ2aWNlQWNjb3VudC5jcmVhdGVcIiwgIGZhbHNlKTtcbiAgICBzZXRQYXRoKHZhbHVlcywgXCJub2RlLnNlcnZpY2VBY2NvdW50Lm5hbWVcIiwgIHNlcnZpY2VBY2NvdW50TmFtZSk7XG4gICAgc2V0UGF0aCh2YWx1ZXMsIFwicmVwbGljYUNvdW50XCIsICBoZWxtT3B0aW9ucy5yZXBsaWNhQ291bnQpO1xuICAgIHNldFBhdGgodmFsdWVzLCBcImltYWdlLnJlcG9zaXRvcnlcIiwgIHJlcG9zaXRvcnkpO1xuXG4gICAgcmV0dXJuIHZhbHVlcztcbn0iXX0=
